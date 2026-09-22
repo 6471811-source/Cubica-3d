@@ -1,6 +1,6 @@
 /* ============================================================
    CUBICA 3D — модель устройства кассетного потолка
-   Версия: 1.3 (адаптив + fullscreen)
+   Версия: 1.5 (canvas растягивается на всю высоту контейнера)
    Лицензировано для домена cubica.by
    ============================================================ */
 
@@ -8,9 +8,6 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js';
 
-/* ============================================================
-   ЗАЩИТА ПО ДОМЕНУ
-   ============================================================ */
 const ALLOWED_DOMAINS = [
   'cubica.by',
   'www.cubica.by',
@@ -29,9 +26,6 @@ if (!isAllowed) {
   startCubica3D();
 }
 
-/* ============================================================
-   ОСНОВНАЯ ФУНКЦИЯ
-   ============================================================ */
 function startCubica3D() {
   const container = document.getElementById('cubica-3d');
   if (!container) {
@@ -55,38 +49,53 @@ function startCubica3D() {
 
   const MISSING = { r: ROWS - 1, c: COLS - 1 };
 
-  /* ---------------- СЦЕНА / КАМЕРА / РЕНДЕР ---------------- */
+  /* ---------------- СЦЕНА / КАМЕРА ---------------- */
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf4f2ee);
   scene.fog = new THREE.Fog(0xf4f2ee, 7, 16);
 
-  const INITIAL_CAM = new THREE.Vector3(2.6, 1.35, 3.0);
-  const INITIAL_TARGET = new THREE.Vector3(0, 0.45, 0);
+  const INITIAL_CAM = new THREE.Vector3(2.1, 1.0, 2.3);
+  const INITIAL_TARGET = new THREE.Vector3(0, 0.35, 0);
   const BASE_DIST = INITIAL_CAM.clone().sub(INITIAL_TARGET).length();
 
-  const camera = new THREE.PerspectiveCamera(30, container.clientWidth / container.clientHeight, 0.1, 100);
+  const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
   camera.position.copy(INITIAL_CAM);
 
+  /* ---------------- RENDERER (canvas растягивается через CSS) ---------------- */
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-  renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(container.clientWidth, container.clientHeight, false);
+  Object.assign(renderer.domElement.style, {
+    width: '100%',
+    height: '100%',
+    display: 'block',
+    position: 'absolute',
+    inset: '0'
+  });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
   container.appendChild(renderer.domElement);
 
+  /* ---------------- LABEL RENDERER ---------------- */
   const labelRenderer = new CSS2DRenderer();
-  labelRenderer.setSize(container.clientWidth, container.clientHeight);
-  Object.assign(labelRenderer.domElement.style, { position: 'absolute', inset: '0', pointerEvents: 'none' });
+  labelRenderer.setSize(container.clientWidth, container.clientHeight, false);
+  Object.assign(labelRenderer.domElement.style, {
+    position: 'absolute',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none'
+  });
   container.appendChild(labelRenderer.domElement);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.target.copy(INITIAL_TARGET);
-  controls.minDistance = 1.8;
-  controls.maxDistance = 12;
+  controls.minDistance = 1.4;
+  controls.maxDistance = 10;
   controls.maxPolarAngle = Math.PI * 0.92;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.35;
@@ -117,7 +126,7 @@ function startCubica3D() {
   const matSpring   = new THREE.MeshStandardMaterial({ color:0xb8bdc2, metalness:0.85, roughness:0.28, side:THREE.DoubleSide });
   const matClip     = new THREE.MeshStandardMaterial({ color:0x8f959b, metalness:0.90, roughness:0.25, side:THREE.DoubleSide });
 
-  /* ---------------- РЕЕСТР АНИМИРУЕМЫХ ЧАСТЕЙ ---------------- */
+  /* ---------------- РЕЕСТР ---------------- */
   const animatables = [];
   function registerPart(obj, opts = {}) {
     animatables.push({
@@ -441,20 +450,20 @@ function startCubica3D() {
   if (labelCassettePos) {
     addLabel('Кассета · Tegular',
       new THREE.Vector3(labelCassettePos.x, -DROP * 0.6, labelCassettePos.z),
-      new THREE.Vector3(labelCassettePos.x + 0.65, 0.45, labelCassettePos.z + 0.65));
+      new THREE.Vector3(labelCassettePos.x + 0.40, 0.20, labelCassettePos.z + 0.40));
   }
 
   addLabel('Т-профиль 24 мм',
     new THREE.Vector3(-W/2 + 2 * CELL, FLANGE_T + 0.0005, -D/2 + CELL * 0.5 + CELL),
-    new THREE.Vector3(-0.55, 0.55, 0.55));
+    new THREE.Vector3(-0.35, 0.35, 0.25));
 
   addLabel('Европодвес',
     new THREE.Vector3(suspX[0], 0.42, -D/2),
-    new THREE.Vector3(suspX[0] - 0.80, 0.42, -D/2 - 0.35));
+    new THREE.Vector3(suspX[0] - 0.50, 0.65, -D/2 - 0.20));
 
   addLabel('Анкерный болт',
     new THREE.Vector3(suspX[1], 1.13, -D/2),
-    new THREE.Vector3(suspX[1] + 0.75, 1.15, -D/2 - 0.25));
+    new THREE.Vector3(suspX[1] + 0.45, 1.00, -D/2 - 0.20));
 
   const clipAnchor = new THREE.Vector3(
     -W/2 + CELL/2 + CELL * 2 - CELL * 0.22,
@@ -463,7 +472,7 @@ function startCubica3D() {
   );
   addLabel('Клипса фиксации кассеты',
     clipAnchor,
-    new THREE.Vector3(clipAnchor.x + 0.65, 0.30, clipAnchor.z + 0.55));
+    new THREE.Vector3(clipAnchor.x + 0.35, 0.15, clipAnchor.z + 0.35));
 
   /* ---------------- АВТОЦИКЛ ---------------- */
   let explodeCurrent = 0;
@@ -497,19 +506,21 @@ function startCubica3D() {
     ? 4 * t * t * t
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-  /* ============================================================
-     АДАПТИВНЫЙ РЕСАЙЗ
-     ============================================================ */
+  /* ---------------- АДАПТИВНЫЙ РЕСАЙЗ ---------------- */
   function onResize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
     if (w === 0 || h === 0) return;
 
+    // Растягиваем canvas и labels на всю площадь контейнера
+    renderer.setSize(w, h, false);
+    labelRenderer.setSize(w, h, false);
+
     camera.aspect = w / h;
 
     const baseAspect = 1.6;
     const ratio = baseAspect / camera.aspect;
-    const scale = Math.max(1, Math.min(ratio, 1.9));
+    const scale = ratio < 1 ? 1 : Math.min(ratio, 1.35);
     const newDist = BASE_DIST * scale;
 
     const target = controls.target;
@@ -518,22 +529,27 @@ function startCubica3D() {
     camera.lookAt(target);
 
     camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
-    labelRenderer.setSize(w, h);
   }
 
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', () => setTimeout(onResize, 200));
 
+  // ResizeObserver ловит любые изменения размеров контейнера
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => onResize());
+    ro.observe(container);
+  }
+
+  // На случай ленивой загрузки Тильды — несколько контрольных пересчётов
+  setTimeout(onResize, 100);
+  setTimeout(onResize, 500);
+  setTimeout(onResize, 1500);
   onResize();
 
-  /* ============================================================
-     FULLSCREEN
-     ============================================================ */
+  /* ---------------- FULLSCREEN ---------------- */
   const fsBtn = document.getElementById('cubica-fs-btn');
   const fsPath = document.getElementById('cubica-fs-path');
 
-  // Иконки: углы наружу (развернуть) / внутрь (свернуть)
   const ICON_EXPAND = 'M4 9V5a1 1 0 0 1 1-1h4 M20 9V5a1 1 0 0 0-1-1h-4 M4 15v4a1 1 0 0 0 1 1h4 M20 15v4a1 1 0 0 1-1 1h-4';
   const ICON_COLLAPSE = 'M9 4v4a1 1 0 0 1-1 1H4 M15 4v4a1 1 0 0 0 1 1h4 M9 20v-4a1 1 0 0 0-1-1H4 M15 20v-4a1 1 0 0 1 1-1h4';
 
@@ -548,14 +564,12 @@ function startCubica3D() {
              || container.msRequestFullscreen;
     if (req) {
       Promise.resolve(req.call(container)).catch(() => {
-        // Если браузер отказал — используем CSS-фоллбек
         container.classList.add('cubica-fallback-fs');
         document.body.style.overflow = 'hidden';
         setTimeout(onResize, 50);
         setIcon(true);
       });
     } else {
-      // iOS Safari и старые браузеры — CSS-фоллбек
       container.classList.add('cubica-fallback-fs');
       document.body.style.overflow = 'hidden';
       setTimeout(onResize, 50);
@@ -588,7 +602,6 @@ function startCubica3D() {
     });
   }
 
-  // Слушаем смену состояния fullscreen (нативный + webkit)
   ['fullscreenchange', 'webkitfullscreenchange', 'msfullscreenchange'].forEach(ev => {
     document.addEventListener(ev, () => {
       const full = document.fullscreenElement === container
@@ -598,7 +611,6 @@ function startCubica3D() {
     });
   });
 
-  // Escape — выйти и из CSS-фуллскрина тоже
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && container.classList.contains('cubica-fallback-fs')) {
       exitFs();
