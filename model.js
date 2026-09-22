@@ -1,6 +1,6 @@
 /* ============================================================
    CUBICA 3D — модель устройства кассетного потолка
-   Версия: 1.5 (canvas растягивается на всю высоту контейнера)
+   Версия: 1.6 (универсальная подгонка под любой контейнер)
    Лицензировано для домена cubica.by
    ============================================================ */
 
@@ -33,7 +33,7 @@ function startCubica3D() {
     return;
   }
 
-  /* ---------------- РАЗМЕРЫ ---------------- */
+  /* ---------------- РАЗМЕРЫ МОДЕЛИ ---------------- */
   const CELL = 0.6, COLS = 3, ROWS = 2;
   const W = COLS * CELL, D = ROWS * CELL;
 
@@ -54,14 +54,19 @@ function startCubica3D() {
   scene.background = new THREE.Color(0xf4f2ee);
   scene.fog = new THREE.Fog(0xf4f2ee, 7, 16);
 
-  const INITIAL_CAM = new THREE.Vector3(2.1, 1.0, 2.3);
-  const INITIAL_TARGET = new THREE.Vector3(0, 0.35, 0);
-  const BASE_DIST = INITIAL_CAM.clone().sub(INITIAL_TARGET).length();
+  // Центр модели и радиус охватывающей сферы.
+  // Радиус подобран так, чтобы влезали кассеты, подвесы и анкеры целиком.
+  const MODEL_CENTER = new THREE.Vector3(0, 0.55, 0);
+  const MODEL_RADIUS = 1.35;
 
-  const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
-  camera.position.copy(INITIAL_CAM);
+  // Направление взгляда камеры (сверху-сбоку), нормализованное
+  const VIEW_DIR = new THREE.Vector3(0.62, 0.50, 0.60).normalize();
 
-  /* ---------------- RENDERER (canvas растягивается через CSS) ---------------- */
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.copy(MODEL_CENTER).addScaledVector(VIEW_DIR, 4.0);
+  camera.lookAt(MODEL_CENTER);
+
+  /* ---------------- RENDERER ---------------- */
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setSize(container.clientWidth, container.clientHeight, false);
@@ -90,12 +95,13 @@ function startCubica3D() {
   });
   container.appendChild(labelRenderer.domElement);
 
+  /* ---------------- УПРАВЛЕНИЕ ---------------- */
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.target.copy(INITIAL_TARGET);
-  controls.minDistance = 1.4;
-  controls.maxDistance = 10;
+  controls.target.copy(MODEL_CENTER);
+  controls.minDistance = 0.5;
+  controls.maxDistance = 30;
   controls.maxPolarAngle = Math.PI * 0.92;
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.35;
@@ -126,7 +132,7 @@ function startCubica3D() {
   const matSpring   = new THREE.MeshStandardMaterial({ color:0xb8bdc2, metalness:0.85, roughness:0.28, side:THREE.DoubleSide });
   const matClip     = new THREE.MeshStandardMaterial({ color:0x8f959b, metalness:0.90, roughness:0.25, side:THREE.DoubleSide });
 
-  /* ---------------- РЕЕСТР ---------------- */
+  /* ---------------- РЕЕСТР АНИМИРУЕМЫХ ЧАСТЕЙ ---------------- */
   const animatables = [];
   function registerPart(obj, opts = {}) {
     animatables.push({
@@ -506,27 +512,43 @@ function startCubica3D() {
     ? 4 * t * t * t
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-  /* ---------------- АДАПТИВНЫЙ РЕСАЙЗ ---------------- */
+  /* ============================================================
+     АДАПТИВНЫЙ РЕСАЙЗ
+     Камера сама отъезжает, чтобы модель вписалась в любой контейнер
+     ============================================================ */
   function onResize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
     if (w === 0 || h === 0) return;
 
-    // Растягиваем canvas и labels на всю площадь контейнера
+    // Canvas и подписи — на всю площадь контейнера
     renderer.setSize(w, h, false);
     labelRenderer.setSize(w, h, false);
 
-    camera.aspect = w / h;
+    const aspect = w / h;
+    camera.aspect = aspect;
 
-    const baseAspect = 1.6;
-    const ratio = baseAspect / camera.aspect;
-    const scale = ratio < 1 ? 1 : Math.min(ratio, 1.35);
-    const newDist = BASE_DIST * scale;
+    // Считаем, на каком расстоянии должна стоять камера,
+    // чтобы сфера радиуса MODEL_RADIUS целиком влезла в кадр
+    // и по вертикали, и по горизонтали.
+    const vFov = camera.fov * Math.PI / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
 
-    const target = controls.target;
-    const dir = camera.position.clone().sub(target).normalize();
-    camera.position.copy(target).add(dir.multiplyScalar(newDist));
-    camera.lookAt(target);
+    const distV = MODEL_RADIUS / Math.sin(vFov / 2);
+    const distH = MODEL_RADIUS / Math.sin(hFov / 2);
+    const dist = Math.max(distV, distH) * 1.05;
+
+    // Сохраняем текущее направление камеры (важно для autoRotate)
+    let dir = camera.position.clone().sub(controls.target);
+    if (dir.lengthSq() < 0.0001) {
+      dir = VIEW_DIR.clone();
+    } else {
+      dir.normalize();
+    }
+
+    controls.target.copy(MODEL_CENTER);
+    camera.position.copy(MODEL_CENTER).addScaledVector(dir, dist);
+    camera.lookAt(MODEL_CENTER);
 
     camera.updateProjectionMatrix();
   }
@@ -540,7 +562,7 @@ function startCubica3D() {
     ro.observe(container);
   }
 
-  // На случай ленивой загрузки Тильды — несколько контрольных пересчётов
+  // Несколько пересчётов — на случай ленивой загрузки Тильды
   setTimeout(onResize, 100);
   setTimeout(onResize, 500);
   setTimeout(onResize, 1500);
