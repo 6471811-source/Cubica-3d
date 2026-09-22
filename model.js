@@ -1,7 +1,7 @@
 /* ============================================================
-   CUBICA 3D ó ÏÓ‰ÂÎ¸ ÛÒÚÓÈÒÚ‚‡ Í‡ÒÒÂÚÌÓ„Ó ÔÓÚÓÎÍ‡
-   ¬ÂÒËˇ: 1.0
-   ÀËˆÂÌÁËÓ‚‡ÌÓ ‰Îˇ ‰ÓÏÂÌ‡ cubica.by
+   CUBICA 3D ‚Äî –º–æ–¥–µ–ª—å —É—Å—Ç—Ä–æ–π—Å—Ç–≤–∞ –∫–∞—Å—Å–µ—Ç–Ω–æ–≥–æ –ø–æ—Ç–æ–ª–∫–∞
+   –í–µ—Ä—Å–∏—è: 1.1
+   –õ–∏—Ü–µ–Ω–∑–∏—Ä–æ–≤–∞–Ω–æ –¥–ª—è –¥–æ–º–µ–Ω–∞ cubica.by
    ============================================================ */
 
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
@@ -9,13 +9,11 @@ import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/cont
 import { CSS2DRenderer, CSS2DObject } from 'https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js';
 
 /* ============================================================
-   «¿Ÿ»“¿ œŒ ƒŒÃ≈Õ”
-   ¬ÔË¯ËÚÂ Ò˛‰‡ Ò‚ÓË ‰ÓÏÂÌ˚ ó ÚÓÎ¸ÍÓ Ì‡ ÌËı ·Û‰ÂÚ ‡·ÓÚ‡Ú¸ ÒÍËÔÚ
+   –ó–ê–©–ò–¢–ê –ü–û –î–û–ú–ï–ù–£
    ============================================================ */
 const ALLOWED_DOMAINS = [
   'cubica.by',
   'www.cubica.by',
-  // ¬ÂÏÂÌÌ˚Â ‰ÓÏÂÌ˚ Tilda (‰Îˇ ÔÂ‰ÔÓÒÏÓÚ‡) ó ÏÓÊÌÓ Û·‡Ú¸ ÔÓÒÎÂ ÔÛ·ÎËÍ‡ˆËË
   'tilda.ws',
   'tilda.cc'
 ];
@@ -26,22 +24,22 @@ const isAllowed = isLocal
   || ALLOWED_DOMAINS.some(d => currentHost === d || currentHost.endsWith('.' + d));
 
 if (!isAllowed) {
-  console.warn('[Cubica 3D] —ÍËÔÚ ÎËˆÂÌÁËÓ‚‡Ì ÚÓÎ¸ÍÓ ‰Îˇ ‰ÓÏÂÌ‡ cubica.by');
+  console.warn('[Cubica 3D] –°–∫—Ä–∏–ø—Ç –ª–∏—Ü–µ–Ω–∑–∏—Ä–æ–≤–∞–Ω —Ç–æ–ª—å–∫–æ –¥–ª—è –¥–æ–º–µ–Ω–∞ cubica.by');
 } else {
   startCubica3D();
 }
 
 /* ============================================================
-   Œ—ÕŒ¬Õ¿ﬂ ‘”Õ ÷»ﬂ
+   –û–°–ù–û–í–ù–ê–Ø –§–£–ù–ö–¶–ò–Ø
    ============================================================ */
 function startCubica3D() {
   const container = document.getElementById('cubica-3d');
   if (!container) {
-    console.error('[Cubica 3D] ÕÂ Ì‡È‰ÂÌ ˝ÎÂÏÂÌÚ #cubica-3d Ì‡ ÒÚ‡ÌËˆÂ.');
+    console.error('[Cubica 3D] –ù–µ –Ω–∞–π–¥–µ–Ω —ç–ª–µ–º–µ–Ω—Ç #cubica-3d –Ω–∞ —Å—Ç—Ä–∞–Ω–∏—Ü–µ.');
     return;
   }
 
-  /* ---------------- –¿«Ã≈–€ ---------------- */
+  /* ---------------- –†–ê–ó–ú–ï–†–´ ---------------- */
   const CELL = 0.6, COLS = 3, ROWS = 2;
   const W = COLS * CELL, D = ROWS * CELL;
 
@@ -57,7 +55,7 @@ function startCubica3D() {
 
   const MISSING = { r: ROWS - 1, c: COLS - 1 };
 
-  /* ---------------- —÷≈Õ¿ /  ¿Ã≈–¿ / –≈Õƒ≈– ---------------- */
+  /* ---------------- –°–¶–ï–ù–ê / –ö–ê–ú–ï–†–ê / –†–ï–ù–î–ï–† ---------------- */
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf4f2ee);
   scene.fog = new THREE.Fog(0xf4f2ee, 7, 16);
@@ -89,7 +87,7 @@ function startCubica3D() {
   controls.autoRotate = true;
   controls.autoRotateSpeed = 0.35;
 
-  /* ---------------- —¬≈“ ---------------- */
+  /* ---------------- –°–í–ï–¢ ---------------- */
   scene.add(new THREE.HemisphereLight(0xffffff, 0xcac5be, 0.95));
   const key = new THREE.DirectionalLight(0xffffff, 1.65);
   key.position.set(3.5, -4.5, 3);
@@ -103,7 +101,7 @@ function startCubica3D() {
   fill.position.set(-4, 1.5, -3);
   scene.add(fill);
 
-  /* ---------------- Ã¿“≈–»¿À€ ---------------- */
+  /* ---------------- –ú–ê–¢–ï–†–ò–ê–õ–´ ---------------- */
   const matFlange   = new THREE.MeshStandardMaterial({ color:0xf7f6f3, metalness:0.05, roughness:0.55 });
   const matGalv     = new THREE.MeshStandardMaterial({ color:0xc9ced3, metalness:0.82, roughness:0.30 });
   const matGalvDark = new THREE.MeshStandardMaterial({ color:0xa4aab0, metalness:0.78, roughness:0.36 });
@@ -115,7 +113,7 @@ function startCubica3D() {
   const matSpring   = new THREE.MeshStandardMaterial({ color:0xb8bdc2, metalness:0.85, roughness:0.28, side:THREE.DoubleSide });
   const matClip     = new THREE.MeshStandardMaterial({ color:0x8f959b, metalness:0.90, roughness:0.25, side:THREE.DoubleSide });
 
-  /* ---------------- –≈≈—“– ¿Õ»Ã»–”≈Ã€’ ◊¿—“≈… ---------------- */
+  /* ---------------- –†–ï–ï–°–¢–† –ê–ù–ò–ú–ò–†–£–ï–ú–´–• –ß–ê–°–¢–ï–ô ---------------- */
   const animatables = [];
   function registerPart(obj, opts = {}) {
     animatables.push({
@@ -127,7 +125,7 @@ function startCubica3D() {
     });
   }
 
-  /* ---------------- “-œ–Œ‘»À‹ ---------------- */
+  /* ---------------- –¢-–ü–†–û–§–ò–õ–¨ ---------------- */
   function makeTRunner(len, opts = {}) {
     const { withSlots = false, withEndLocks = false, slotStep = 0.15 } = opts;
     const g = new THREE.Group();
@@ -191,7 +189,7 @@ function startCubica3D() {
   scene.add(gridGroup);
   registerPart(gridGroup, { offsetY: 0.06, delay: 0.90, span: 0.10 });
 
-  /* ----------------  À»œ—¿ ‘» —¿÷»» ---------------- */
+  /* ---------------- –ö–õ–ò–ü–°–ê –§–ò–ö–°–ê–¶–ò–ò ---------------- */
   function makeFixationClip() {
     const g = new THREE.Group();
     const clipW  = 0.014;
@@ -245,7 +243,7 @@ function startCubica3D() {
   scene.add(clipsGroup);
   registerPart(clipsGroup, { offsetY: 0.06, delay: 0.90, span: 0.10 });
 
-  /* ---------------- ≈¬–ŒœŒƒ¬≈— ---------------- */
+  /* ---------------- –ï–í–†–û–ü–û–î–í–ï–° ---------------- */
   function makeEuropend() {
     const g = new THREE.Group();
 
@@ -346,7 +344,7 @@ function startCubica3D() {
     registerPart(e, { offsetY: 0.95, delay, span: 0.35 });
   });
 
-  /* ----------------  ¿——≈“¿ TEGULAR ---------------- */
+  /* ---------------- –ö–ê–°–°–ï–¢–ê TEGULAR ---------------- */
   function makeTegularCassette() {
     const g = new THREE.Group();
     const s = PANEL_SIZE;
@@ -420,7 +418,7 @@ function startCubica3D() {
     registerPart(item.obj, { offsetY: -0.60, delay, span: 0.25 });
   });
 
-  /* ---------------- œŒƒœ»—» ---------------- */
+  /* ---------------- –ü–û–î–ü–ò–°–ò ---------------- */
   function addLabel(text, anchor, labelPos) {
     const lineGeo = new THREE.BufferGeometry().setFromPoints([anchor.clone(), labelPos.clone()]);
     const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({
@@ -437,20 +435,20 @@ function startCubica3D() {
   }
 
   if (labelCassettePos) {
-    addLabel(' ‡ÒÒÂÚ‡ ∑ Tegular',
+    addLabel('–ö–∞—Å—Å–µ—Ç–∞ ¬∑ Tegular',
       new THREE.Vector3(labelCassettePos.x, -DROP * 0.6, labelCassettePos.z),
       new THREE.Vector3(labelCassettePos.x + 0.65, 0.45, labelCassettePos.z + 0.65));
   }
 
-  addLabel('“-ÔÓÙËÎ¸ 24 ÏÏ',
+  addLabel('–¢-–ø—Ä–æ—Ñ–∏–ª—å 24 –º–º',
     new THREE.Vector3(-W/2 + 2 * CELL, FLANGE_T + 0.0005, -D/2 + CELL * 0.5 + CELL),
     new THREE.Vector3(-0.55, 0.55, 0.55));
 
-  addLabel('≈‚ÓÔÓ‰‚ÂÒ',
+  addLabel('–ï–≤—Ä–æ–ø–æ–¥–≤–µ—Å',
     new THREE.Vector3(suspX[0], 0.42, -D/2),
     new THREE.Vector3(suspX[0] - 0.80, 0.42, -D/2 - 0.35));
 
-  addLabel('¿ÌÍÂÌ˚È ·ÓÎÚ',
+  addLabel('–ê–Ω–∫–µ—Ä–Ω—ã–π –±–æ–ª—Ç',
     new THREE.Vector3(suspX[1], 1.13, -D/2),
     new THREE.Vector3(suspX[1] + 0.75, 1.15, -D/2 - 0.25));
 
@@ -459,11 +457,11 @@ function startCubica3D() {
     BULB_TOP - 0.005,
     -D/2 + CELL
   );
-  addLabel(' ÎËÔÒ‡ ÙËÍÒ‡ˆËË Í‡ÒÒÂÚ˚',
+  addLabel('–ö–ª–∏–ø—Å–∞ —Ñ–∏–∫—Å–∞—Ü–∏–∏ –∫–∞—Å—Å–µ—Ç—ã',
     clipAnchor,
     new THREE.Vector3(clipAnchor.x + 0.65, 0.30, clipAnchor.z + 0.55));
 
-  /* ---------------- ¿¬“Œ÷» À ---------------- */
+  /* ---------------- –ê–í–¢–û–¶–ò–ö–õ ---------------- */
   let explodeCurrent = 0;
   let cycleT = 0;
 
@@ -495,7 +493,7 @@ function startCubica3D() {
     ? 4 * t * t * t
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-  /* ---------------- –≈—¿…« + œ¿”«¿ ---------------- */
+  /* ---------------- –†–ï–°–ê–ô–ó + –ü–ê–£–ó–ê ---------------- */
   function onResize() {
     const w = container.clientWidth, h = container.clientHeight;
     camera.aspect = w / h;
@@ -511,7 +509,7 @@ function startCubica3D() {
   }, { threshold: 0 });
   io.observe(container);
 
-  /* ---------------- ÷» À –≈Õƒ≈–¿ ---------------- */
+  /* ---------------- –¶–ò–ö–õ –†–ï–ù–î–ï–†–ê ---------------- */
   const clock = new THREE.Clock();
 
   function animate() {
