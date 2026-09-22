@@ -1,6 +1,6 @@
 /* ============================================================
    CUBICA 3D — модель устройства кассетного потолка
-   Версия: 1.1
+   Версия: 1.3 (адаптив + fullscreen)
    Лицензировано для домена cubica.by
    ============================================================ */
 
@@ -60,8 +60,12 @@ function startCubica3D() {
   scene.background = new THREE.Color(0xf4f2ee);
   scene.fog = new THREE.Fog(0xf4f2ee, 7, 16);
 
+  const INITIAL_CAM = new THREE.Vector3(2.6, 1.35, 3.0);
+  const INITIAL_TARGET = new THREE.Vector3(0, 0.45, 0);
+  const BASE_DIST = INITIAL_CAM.clone().sub(INITIAL_TARGET).length();
+
   const camera = new THREE.PerspectiveCamera(30, container.clientWidth / container.clientHeight, 0.1, 100);
-  camera.position.set(2.6, 1.35, 3.0);
+  camera.position.copy(INITIAL_CAM);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(container.clientWidth, container.clientHeight);
@@ -80,7 +84,7 @@ function startCubica3D() {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.target.set(0, 0.45, 0);
+  controls.target.copy(INITIAL_TARGET);
   controls.minDistance = 1.8;
   controls.maxDistance = 12;
   controls.maxPolarAngle = Math.PI * 0.92;
@@ -493,16 +497,115 @@ function startCubica3D() {
     ? 4 * t * t * t
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-  /* ---------------- РЕСАЙЗ + ПАУЗА ---------------- */
+  /* ============================================================
+     АДАПТИВНЫЙ РЕСАЙЗ
+     ============================================================ */
   function onResize() {
-    const w = container.clientWidth, h = container.clientHeight;
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    if (w === 0 || h === 0) return;
+
     camera.aspect = w / h;
+
+    const baseAspect = 1.6;
+    const ratio = baseAspect / camera.aspect;
+    const scale = Math.max(1, Math.min(ratio, 1.9));
+    const newDist = BASE_DIST * scale;
+
+    const target = controls.target;
+    const dir = camera.position.clone().sub(target).normalize();
+    camera.position.copy(target).add(dir.multiplyScalar(newDist));
+    camera.lookAt(target);
+
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
     labelRenderer.setSize(w, h);
   }
-  window.addEventListener('resize', onResize);
 
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', () => setTimeout(onResize, 200));
+
+  onResize();
+
+  /* ============================================================
+     FULLSCREEN
+     ============================================================ */
+  const fsBtn = document.getElementById('cubica-fs-btn');
+  const fsPath = document.getElementById('cubica-fs-path');
+
+  // Иконки: углы наружу (развернуть) / внутрь (свернуть)
+  const ICON_EXPAND = 'M4 9V5a1 1 0 0 1 1-1h4 M20 9V5a1 1 0 0 0-1-1h-4 M4 15v4a1 1 0 0 0 1 1h4 M20 15v4a1 1 0 0 1-1 1h-4';
+  const ICON_COLLAPSE = 'M9 4v4a1 1 0 0 1-1 1H4 M15 4v4a1 1 0 0 0 1 1h4 M9 20v-4a1 1 0 0 0-1-1H4 M15 20v-4a1 1 0 0 1 1-1h4';
+
+  function setIcon(isFull) {
+    if (fsPath) fsPath.setAttribute('d', isFull ? ICON_COLLAPSE : ICON_EXPAND);
+    if (fsBtn) fsBtn.setAttribute('title', isFull ? 'Свернуть' : 'Во весь экран');
+  }
+
+  function enterFs() {
+    const req = container.requestFullscreen
+             || container.webkitRequestFullscreen
+             || container.msRequestFullscreen;
+    if (req) {
+      Promise.resolve(req.call(container)).catch(() => {
+        // Если браузер отказал — используем CSS-фоллбек
+        container.classList.add('cubica-fallback-fs');
+        document.body.style.overflow = 'hidden';
+        setTimeout(onResize, 50);
+        setIcon(true);
+      });
+    } else {
+      // iOS Safari и старые браузеры — CSS-фоллбек
+      container.classList.add('cubica-fallback-fs');
+      document.body.style.overflow = 'hidden';
+      setTimeout(onResize, 50);
+      setIcon(true);
+    }
+  }
+
+  function exitFs() {
+    const exit = document.exitFullscreen
+              || document.webkitExitFullscreen
+              || document.msExitFullscreen;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      if (exit) exit.call(document);
+    }
+    container.classList.remove('cubica-fallback-fs');
+    document.body.style.overflow = '';
+    setTimeout(onResize, 50);
+    setIcon(false);
+  }
+
+  function isFull() {
+    return document.fullscreenElement === container
+        || document.webkitFullscreenElement === container
+        || container.classList.contains('cubica-fallback-fs');
+  }
+
+  if (fsBtn) {
+    fsBtn.addEventListener('click', () => {
+      if (isFull()) exitFs(); else enterFs();
+    });
+  }
+
+  // Слушаем смену состояния fullscreen (нативный + webkit)
+  ['fullscreenchange', 'webkitfullscreenchange', 'msfullscreenchange'].forEach(ev => {
+    document.addEventListener(ev, () => {
+      const full = document.fullscreenElement === container
+                || document.webkitFullscreenElement === container;
+      setIcon(full);
+      setTimeout(onResize, 100);
+    });
+  });
+
+  // Escape — выйти и из CSS-фуллскрина тоже
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && container.classList.contains('cubica-fallback-fs')) {
+      exitFs();
+    }
+  });
+
+  /* ---------------- ПАУЗА ВНЕ ВИДИМОСТИ ---------------- */
   let inView = true;
   const io = new IntersectionObserver((entries) => {
     inView = entries[0].isIntersecting;
